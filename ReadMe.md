@@ -1,4 +1,4 @@
-# GoogLeNet for Placental Histopathology Image Classification
+# GoogLeNet for Placental Histopathology Image Classification Problem
 
 This project implements and evaluates a customized GoogLeNet architecture for multi class classification of tissue microscopy images. The workflow includes dataset preparation, preprocessing, transfer learning, grid search over hyperparameters, extended fine-tuning, class-weighted training, and comparison of model variants.
 
