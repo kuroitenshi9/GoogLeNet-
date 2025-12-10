@@ -1,23 +1,22 @@
 # GoogLeNet for Placental Histopathology Image Classification
 
-This project implements and evaluates a customized GoogLeNet architecture for multi-class classification of placental tissue microscopy images. The workflow includes dataset preparation, preprocessing, transfer learning, grid search over hyperparameters, extended fine-tuning, class-weighted training, and systematic comparison of model variants.
+This project implements and evaluates a customized GoogLeNet architecture for multi class classification of tissue microscopy images. The workflow includes dataset preparation, preprocessing, transfer learning, grid search over hyperparameters, extended fine-tuning, class-weighted training, and comparison of model variants.
 
 ---
 
 ## 1. Problem and Data
 
-The goal is to classify four types of placental tissue from microscopic images:
+The purpose of this project is to classify four types of tissue from microscopic images:
 
-- Chorionic villi  
-- Decidual tissue  
-- Hemorrhage  
-- Trophoblastic tissue  
+- Chorionic villi, 
+- Decidual tissue,  
+- Hemorrhage,  
+- Trophoblastic tissue.  
 
-The dataset is organized as:
+The dataset was organized as:
 
 ```text
-data/
-└── POC_Dataset/
+POC_Dataset/
     ├── Training/
     │   ├── Chorionic_villi/
     │   ├── Decidual_tissue/
@@ -30,8 +29,10 @@ data/
         └── Trophoblastic_tissue/
 ````
 
-Each subfolder contains the corresponding class images.
-Training data is internally split into train/validation using `random_split`.
+Each subfolder contained the corresponding class images.
+Training data is internally split into train/validation using `random_split` in code implementation.
+Due to the size of dataset and limitation of Github I was unable to upload it to this repositorium, however
+one can see simple bath in jupyter textbook to get an idea of dataset.
 
 ---
 
@@ -58,9 +59,9 @@ def create_googlenet(num_classes=4, pretrained=True):
 
 Differences vs original GoogLeNet:
 
-* 1000-class heads are replaced with 4-class heads (main + both auxiliaries).
-* ImageNet weights are reused for convolutional/Inception layers (transfer learning).
-* Core architecture (Inception blocks) remains unchanged; only classification layers are task-specific.
+* Initial 1000 class heads are replaced with 4 class heads (fo both main and auxiliaries as this model classifies 4 classes).
+* ImageNet weights are reused for convolutional (inception) layers (aka transfer learning).
+* Core architecture (Inception blocks) remains unchanged but classification layers are tailored for this task.
 
 ---
 
@@ -75,11 +76,11 @@ Differences vs original GoogLeNet:
 
 ### 3.2 Longer Training
 
-The model was then trained for **40 epochs** with the same hyperparameters to allow full convergence.
+The model was then trained for 40 epochs with above hyperparameters and used early stopping to avoid overlearning..
 
 ### 3.3 Class-Weighted Loss
 
-To address class imbalance, the loss was changed to a **class-weighted CrossEntropyLoss**:
+To address class imbalance, the loss function was decided on a class weighted CrossEntropyLoss:
 
 ```python
 class_counts = np.array([1391, 926, 1138, 700], dtype=np.float32)
@@ -88,11 +89,12 @@ class_weights = class_weights / class_weights.sum() * len(class_counts)
 criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
 ```
 
-This improved recall and F1, especially for Decidual and Trophoblastic tissue.
+Test proved that this appproach improved recall and F1, especially for Decidual and Trophoblastic tissue.
+For detailed description of tests one can refer to the detailed section in Jupyter File.
 
 ### 3.4 Data Augmentation
 
-Moderate augmentation is used during training:
+The data augmentation is used during training to address the class imbalance:
 
 ```python
 train_transform = transforms.Compose([
@@ -111,13 +113,13 @@ test_transform = transforms.Compose([
 ])
 ```
 
-More aggressive augmentations (RandomResizedCrop, heavy blur/sharpness) were tested, but slightly degraded performance, so the final model uses the more conservative pipeline above.
+More aggressive augmentations (RandomResizedCrop, heavy blur/sharpness) were tested but as theyy slightly degraded performance the final model uses the pipeline above.
 
 ---
 
 ## 4. Results and Final Model
 
-### 4.1 Comparison of Model Variants
+### 4.1 Comparison of Final Model Tests
 
 ```markdown
 | Model Variant                              | Test Loss | Accuracy | Macro Precision | Macro Recall | Macro F1 |
@@ -127,6 +129,7 @@ More aggressive augmentations (RandomResizedCrop, heavy blur/sharpness) were tes
 | 40 epochs + class weights (final model)    | 0.5457    | 0.8524   | 0.8668          | 0.8438       | 0.8454   |
 | 40 epochs + class weights + strong aug     | 0.5762    | 0.8332   | 0.8485          | 0.8245       | 0.8221   |
 ```
+Refer to Jupyter Notebook for detailed grid search test description. 
 
 ### 4.2 Final Model Metrics (40 epochs + class weights)
 
@@ -149,7 +152,7 @@ Per-class performance:
 ```text
 .
 ├── data/
-│   └── POC_Dataset/
+│   └── POC_Dataset/ #not included in repositiorium due to the data limit
 │       ├── Training/
 │       │   ├── Chorionic_villi/
 │       │   ├── Decidual_tissue/
@@ -162,27 +165,26 @@ Per-class performance:
 │           └── Trophoblastic_tissue/
 │
 ├── final_model/
-│   ├── best_40_googlenetv3.pth          # selected final checkpoint
+│   ├── best_40_googlenetv3.pth          # selected final checkpoint, not included in repositiorium due to the data limit
 │   └── conf_matrix/
 │       ├── cm_googlenetv3_raw.png       # confusion matrix (counts)
 │       └── cm_googlenetv3_norm.png      # confusion matrix (normalized)
 │
 ├── test_data/
-│   ├── best_googlenet_lr=...pth         # all tested model checkpoints from grid search
+│   ├── best_googlenet_lr=...pth         # all tested model checkpoints from grid search, not included in repositiorium due to the data limit
 │   ├── cm_*.png                         # confusion matrices for each tested model
-│   ├── googlenet_experiments_results.csv# validation metrics for all experiments
+│   ├── googlenet_experiments_results.csv # validation metrics for all experiments
 │   ├── model_result.csv / model_results.csv
 │   └── model_comparison.png             # bar plot comparing test accuracy of all models
 │
 └── GoogLeNet.ipynb                      # main training, evaluation and analysis notebook
 ```
 
-* `test_data/` contains the artifacts of the hyperparameter search:
-  all best checkpoints, their confusion matrices, CSV logs with validation/test metrics, and a comparison plot.
-* `final_model/` stores the **single selected final model** and its confusion matrices for easy reuse and reporting.
+* `test_data/` contains the results of the hyperparameter search:
+  all best checkpoints confusion matrices, CSV logs with validation and test metrics, and a comparison plot.
 
 ---
 
 ## 6. Conclusion
 
-The project shows that a carefully adapted GoogLeNet with ImageNet pretraining, longer fine-tuning, class-weighted loss, and moderate augmentation can achieve strong, balanced performance on a multi-class placental histopathology dataset. The final model significantly improves over the initial baseline, particularly in recall and F1 for clinically more challenging tissue classes.
+The project shows that it is possible to adapt ImageNet pretrained GoogLeNet model. The longer fine-tuning, class-weighted loss, and moderate augmentation can achieve strong, balanced performance on a multi-class for histopathology dataset. The final model significantly improves over the initial baseline, particularly in recall and F1 for clinically more challenging tissue classes. Due to the limits of GPU and time more test couldn't be conducted but it is advised to try more modern techniques and implement other models like VGG or ResNet to compare results.
